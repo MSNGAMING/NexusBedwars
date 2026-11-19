@@ -1,0 +1,230 @@
+# ═════════════════════════════════════════════════════════════════════════════
+#  NexusBedwars – config.yml
+# ═════════════════════════════════════════════════════════════════════════════
+#  This file is HOT-RELOADED: save it and the plugin picks the change up within
+#  ~1 second (no /bedwars reload needed). The same values can be changed from
+#  the in-game GUI (/bedwars admin) or with `/bedwars config set <path> <value>`.
+#  All three layers write to the same store, so they are always in sync.
+#
+#  Text values use MiniMessage:  https://docs.advntr.dev/minimessage/format.html
+# ═════════════════════════════════════════════════════════════════════════════
+
+# Unique id of this server. Used as the sender id in Redis stat synchronisation.
+server-id: "bw-1"
+
+# ── Database ─────────────────────────────────────────────────────────────────
+database:
+  # SQLITE (single server, zero setup) | MYSQL | POSTGRESQL (networks)
+  type: SQLITE
+  sqlite-file: "bedwars.db"
+  host: "127.0.0.1"
+  port: 0                # 0 = driver default (MySQL 3306, PostgreSQL 5432)
+  name: "bedwars"
+  username: "root"
+  password: ""
+  table-prefix: "bw_"
+  # HikariCP pool. SQLite is forced to a single connection (WAL mode).
+  pool:
+    maximum-pool-size: 10
+    minimum-idle: 2
+    connection-timeout-ms: 10000
+    max-lifetime-ms: 1740000
+  # How often dirty player profiles are written back (seconds). Profiles are
+  # always flushed on quit, game end and shutdown as well.
+  flush-interval-seconds: 60
+
+# ── Redis (optional cross-server stat synchronisation) ───────────────────────
+redis:
+  enabled: false
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  ssl: false
+  channel: "nexusbw:stats"
+
+# ── Game rules ───────────────────────────────────────────────────────────────
+game:
+  lobby-countdown: 20          # seconds, starts once min-players is reached
+  full-lobby-countdown: 5      # seconds, used when the arena is full
+  ending-duration: 10          # seconds between the last kill and the reset
+  respawn-delay: 5             # seconds spent as spectator after a bed-alive death
+  spawn-protection-radius: 4   # blocks around team spawns where building is denied
+  void-kill-y-offset: 5        # y below arena minimum that counts as the void
+  invulnerable-after-respawn: 3
+  # Blocks that survive TNT / fireball explosions.
+  blast-proof-materials:
+    - END_STONE
+    - GLASS
+    - WHITE_STAINED_GLASS
+    - RED_STAINED_GLASS
+    - BLUE_STAINED_GLASS
+    - GREEN_STAINED_GLASS
+    - YELLOW_STAINED_GLASS
+    - CYAN_STAINED_GLASS
+    - PINK_STAINED_GLASS
+    - GRAY_STAINED_GLASS
+  tnt:
+    fuse-ticks: 52
+    damage: 4.0                # damage dealt by TNT (hearts * 2)
+    knockback: 1.6             # horizontal launch strength (TNT jumping)
+    vertical-boost: 0.9
+    radius: 4.5
+  fireball:
+    speed: 1.2
+    power: 2.4                 # explosion yield
+    damage: 3.0
+    knockback: 1.9
+    vertical-boost: 0.8
+    radius: 4.0
+    cooldown-ticks: 10
+  fallback-lobby:
+    world: "world"
+    x: 0.5
+    y: 100.0
+    z: 0.5
+
+# Timeline of in-game events (seconds since start). Actions:
+#   GENERATOR_TIER (type, tier) | BED_GONE | SUDDEN_DEATH | END_GAME
+events:
+  - { at: 360,  action: GENERATOR_TIER, type: DIAMOND, tier: 2, announce: "<aqua>Diamond generators upgraded to <bold>Tier II" }
+  - { at: 720,  action: GENERATOR_TIER, type: EMERALD, tier: 2, announce: "<green>Emerald generators upgraded to <bold>Tier II" }
+  - { at: 1080, action: GENERATOR_TIER, type: DIAMOND, tier: 3, announce: "<aqua>Diamond generators upgraded to <bold>Tier III" }
+  - { at: 1440, action: GENERATOR_TIER, type: EMERALD, tier: 3, announce: "<green>Emerald generators upgraded to <bold>Tier III" }
+  - { at: 1800, action: BED_GONE,       announce: "<red><bold>All beds have been destroyed!" }
+  - { at: 2400, action: SUDDEN_DEATH,   announce: "<dark_red><bold>SUDDEN DEATH!" }
+  - { at: 3000, action: END_GAME,       announce: "<gray>Time limit reached." }
+
+# ── Generators ───────────────────────────────────────────────────────────────
+# interval = ticks between drops, amount = items per drop, max = item cap lying
+# around the generator. Tier N uses the N-th entry. A per-generator
+# speed-multiplier (arenas.yml / setup GUI) scales the interval on top.
+generators:
+  radius-split: 3.0            # split-generation: players within this radius each receive the drop
+  iron:
+    tiers:
+      - { interval: 20, amount: 1, max: 48 }
+  gold:
+    tiers:
+      - { interval: 160, amount: 1, max: 12 }
+  diamond:
+    tiers:
+      - { interval: 600, amount: 1, max: 4 }
+      - { interval: 420, amount: 1, max: 6 }
+      - { interval: 300, amount: 1, max: 8 }
+  emerald:
+    tiers:
+      - { interval: 1200, amount: 1, max: 3 }
+      - { interval: 840,  amount: 1, max: 4 }
+      - { interval: 600,  amount: 1, max: 6 }
+
+# ── Team upgrades ────────────────────────────────────────────────────────────
+upgrades:
+  sharpness:  { name: "Sharpened Swords",  icon: IRON_SWORD,       costs: [4] }
+  protection: { name: "Reinforced Armor",  icon: IRON_CHESTPLATE,  costs: [2, 4, 8, 16] }
+  haste:      { name: "Maniac Miner",      icon: GOLDEN_PICKAXE,   costs: [2, 4] }
+  forge:
+    name: "Iron Forge"
+    icon: FURNACE
+    costs: [2, 4, 6, 8]
+    multipliers: [1.0, 1.5, 2.0, 2.0, 3.0]   # index = forge level
+    emerald-level: 3                          # from this level the forge also spawns emeralds
+    emerald-interval: 1000
+  traps:
+    costs: [1, 2, 4]           # price by number of traps already queued
+    max-queue: 3
+    trigger-radius: 6.0
+    cooldown-seconds: 30
+
+# ── Shop ─────────────────────────────────────────────────────────────────────
+# Tokens TEAM_WOOL / TEAM_TERRACOTTA / TEAM_STAINED_GLASS resolve to the buyer's team colour.
+# Armor entries ending in _BOOTS equip the whole leg/foot tier (permanent per life-cycle).
+shop:
+  default-quick-buy: [wool, stone_sword, chain_armor, bow, pickaxe, golden_apple, fireball, tnt, ender_pearl, water_bucket]
+  categories:
+    - { id: blocks,  icon: TERRACOTTA,     name: "Blocks" }
+    - { id: melee,   icon: GOLDEN_SWORD,   name: "Melee" }
+    - { id: armor,   icon: CHAINMAIL_BOOTS, name: "Armor" }
+    - { id: tools,   icon: STONE_PICKAXE,  name: "Tools" }
+    - { id: ranged,  icon: BOW,            name: "Ranged" }
+    - { id: utility, icon: TNT,            name: "Utility" }
+  items:
+    - { id: wool,          category: blocks,  material: TEAM_WOOL,           amount: 16, cost-material: IRON_INGOT,    cost: 4,  name: "Wool" }
+    - { id: clay,          category: blocks,  material: TEAM_TERRACOTTA,     amount: 16, cost-material: IRON_INGOT,    cost: 12, name: "Hardened Clay" }
+    - { id: glass,         category: blocks,  material: TEAM_STAINED_GLASS,  amount: 4,  cost-material: IRON_INGOT,    cost: 12, name: "Blast-Proof Glass" }
+    - { id: endstone,      category: blocks,  material: END_STONE,           amount: 12, cost-material: IRON_INGOT,    cost: 24, name: "End Stone" }
+    - { id: ladder,        category: blocks,  material: LADDER,              amount: 16, cost-material: IRON_INGOT,    cost: 4,  name: "Ladder" }
+    - { id: planks,        category: blocks,  material: OAK_PLANKS,          amount: 16, cost-material: GOLD_INGOT,    cost: 4,  name: "Wood" }
+    - { id: obsidian,      category: blocks,  material: OBSIDIAN,            amount: 4,  cost-material: EMERALD,       cost: 4,  name: "Obsidian" }
+    - { id: stone_sword,   category: melee,   material: STONE_SWORD,         amount: 1,  cost-material: IRON_INGOT,    cost: 10, name: "Stone Sword" }
+    - { id: iron_sword,    category: melee,   material: IRON_SWORD,          amount: 1,  cost-material: GOLD_INGOT,    cost: 7,  name: "Iron Sword" }
+    - { id: diamond_sword, category: melee,   material: DIAMOND_SWORD,       amount: 1,  cost-material: EMERALD,       cost: 4,  name: "Diamond Sword" }
+    - { id: chain_armor,   category: armor,   material: CHAINMAIL_BOOTS,     amount: 1,  cost-material: IRON_INGOT,    cost: 40, name: "Chainmail Armor" }
+    - { id: iron_armor,    category: armor,   material: IRON_BOOTS,          amount: 1,  cost-material: GOLD_INGOT,    cost: 12, name: "Iron Armor" }
+    - { id: diamond_armor, category: armor,   material: DIAMOND_BOOTS,       amount: 1,  cost-material: EMERALD,       cost: 6,  name: "Diamond Armor" }
+    - { id: shears,        category: tools,   material: SHEARS,              amount: 1,  cost-material: IRON_INGOT,    cost: 20, name: "Shears" }
+    - { id: pickaxe,       category: tools,   material: IRON_PICKAXE,        amount: 1,  cost-material: IRON_INGOT,    cost: 10, name: "Pickaxe" }
+    - { id: axe,           category: tools,   material: IRON_AXE,            amount: 1,  cost-material: IRON_INGOT,    cost: 10, name: "Axe" }
+    - { id: bow,           category: ranged,  material: BOW,                 amount: 1,  cost-material: GOLD_INGOT,    cost: 12, name: "Bow" }
+    - { id: arrows,        category: ranged,  material: ARROW,               amount: 8,  cost-material: GOLD_INGOT,    cost: 2,  name: "Arrows" }
+    - { id: golden_apple,  category: utility, material: GOLDEN_APPLE,        amount: 1,  cost-material: GOLD_INGOT,    cost: 3,  name: "Golden Apple" }
+    - { id: fireball,      category: utility, material: FIRE_CHARGE,         amount: 1,  cost-material: IRON_INGOT,    cost: 40, name: "Fireball" }
+    - { id: tnt,           category: utility, material: TNT,                 amount: 1,  cost-material: GOLD_INGOT,    cost: 4,  name: "TNT" }
+    - { id: ender_pearl,   category: utility, material: ENDER_PEARL,         amount: 1,  cost-material: EMERALD,       cost: 4,  name: "Ender Pearl" }
+    - { id: water_bucket,  category: utility, material: WATER_BUCKET,        amount: 1,  cost-material: GOLD_INGOT,    cost: 3,  name: "Water Bucket" }
+    - { id: bridge_egg,    category: utility, material: EGG,                 amount: 1,  cost-material: EMERALD,       cost: 1,  name: "Bridge Egg" }
+
+# ── Rollback ─────────────────────────────────────────────────────────────────
+rollback:
+  blocks-per-tick-per-chunk: 2500   # slice size – keeps every region tick far below 50 ms
+
+# ── Elo / Ranking ────────────────────────────────────────────────────────────
+elo:
+  start: 1000
+  k-factor: 24
+
+# ── Rewards (Vault, optional) ────────────────────────────────────────────────
+rewards:
+  kill: 5.0
+  final-kill: 15.0
+  bed: 25.0
+  win: 100.0
+
+# ── Death / kill effects: NONE | LIGHTNING | FIREWORK | SOUL | BLOOD ─────────
+effects:
+  kill: BLOOD
+  final-kill: LIGHTNING
+
+# ── Messages (MiniMessage). <prefix> expands to messages.prefix ──────────────
+messages:
+  prefix: "<gradient:#ff5555:#ffaa00><bold>BEDWARS</bold></gradient> <dark_gray>»</dark_gray>"
+  no-permission: "<prefix> <red>You do not have permission."
+  player-only: "<prefix> <red>This command can only be used by players."
+  arena-not-found: "<prefix> <red>Arena <white><arena></white> does not exist."
+  arena-not-ready: "<prefix> <red>Arena <white><arena></white> is not available."
+  arena-full: "<prefix> <red>That arena is full."
+  no-arena: "<prefix> <red>There is no joinable arena right now."
+  already-ingame: "<prefix> <red>You are already in a game."
+  not-ingame: "<prefix> <red>You are not in a game."
+  player-join: "<prefix> <gray><player> <yellow>joined <gray>(<white><count></white>/<white><max></white>)"
+  player-leave: "<prefix> <gray><player> <red>left <gray>(<white><count></white>/<white><max></white>)"
+  countdown: "<prefix> <yellow>The game starts in <red><seconds></red> second(s)!"
+  countdown-cancelled: "<prefix> <red>Not enough players – countdown cancelled."
+  game-start: "<prefix> <green><bold>The game has started! <gray>Protect your bed and destroy the others!"
+  bed-destroyed: "<prefix> <bold><team></bold> <gray>bed was destroyed by <player><gray>!"
+  bed-own: "<prefix> <red>You cannot destroy your own bed!"
+  bed-title: "<red>BED DESTROYED!"
+  bed-subtitle: "<gray>You will no longer respawn!"
+  kill: "<prefix> <victim> <gray>was slain by <killer><gray>."
+  final-kill: "<prefix> <victim> <gray>was slain by <killer><gray>. <aqua><bold>FINAL KILL!"
+  death: "<prefix> <victim> <gray>died."
+  team-eliminated: "<prefix> <team> <gray>has been <red>eliminated<gray>!"
+  respawning: "<red>Respawning in <yellow><seconds></yellow>…"
+  victory: "<prefix> <gold><bold>VICTORY!</bold> <team> <gray>won the game."
+  draw: "<prefix> <gray>The game ended in a draw."
+  cant-afford: "<prefix> <red>You need <white><amount>x <item></white>."
+  purchased: "<prefix> <green>Purchased <white><item></white>."
+  upgrade-bought: "<prefix> <player> <gray>purchased <green><upgrade> <gray>(Level <white><level></white>)."
+  trap-triggered: "<prefix> <red><bold>TRAP TRIGGERED!</bold> <gray><trap>"
+  trap-title: "<red>Trap triggered!"
+  config-reloaded: "<prefix> <green>Configuration reloaded."
+  setup-saved: "<green>✔ <message>"

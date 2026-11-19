@@ -1,0 +1,37 @@
+name: NexusBedwars
+version: '${version}'
+description: Enterprise-grade Bedwars for Paper, Purpur and Folia
+authors: [NexusDev]
+website: https://example.com/nexusbedwars
+
+main: dev.nexus.bedwars.BedwarsPlugin
+bootstrapper: dev.nexus.bedwars.BedwarsBootstrap
+loader: dev.nexus.bedwars.BedwarsLoader
+
+# Compiled against 1.21.x. The same jar loads on every later release (up to 26.x)
+# because all unstable API surface goes through platform/Compat.
+api-version: '1.21'
+load: POSTWORLD
+
+# Regionised-threading safe: every world/entity access is routed through
+# platform/Scheduler (global / region / entity / async schedulers).
+folia-supported: true
+
+dependencies:
+  server:
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    Vault:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    DecentHolograms:
+      load: BEFORE
+      required: false
+      join-classpath: false
+    FancyHolograms:
+      load: BEFORE
+      required: false
+      join-classpath: false
