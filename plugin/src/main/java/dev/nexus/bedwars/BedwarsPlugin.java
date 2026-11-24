@@ -115,6 +115,7 @@ public final class BedwarsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (wizard != null) wizard.shutdown();
         if (watcher != null) watcher.close();
         if (arenas != null) arenas.shutdown();
         if (stats != null) {

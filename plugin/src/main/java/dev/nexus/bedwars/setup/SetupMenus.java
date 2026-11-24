@@ -86,6 +86,14 @@ final class SetupMenus {
                         .name((done ? "<green>✔ " : "<red>✘ ") + "<white>" + (step.ordinal() + 1) + ". " + step.title())
                         .lore(lore).glow(step == next).build(), c -> wiz.openStep(c.player(), def, step));
             }
+            set(30, ItemBuilder.of(Material.CHEST).name("<yellow><bold>Equip Setup Hotbar")
+                    .lore("<gray>Equips the 9-slot in-game toolkit",
+                            "<gray>to configure all points on the fly.",
+                            "",
+                            "<yellow>Click to equip tools").glow(true).build(), c -> {
+                c.player().closeInventory();
+                wiz.enter(c.player(), def);
+            });
             set(31, ItemBuilder.of(Material.BARRIER).name("<red>Close").build(), c -> c.player().closeInventory());
             fillEmpty(Msg.filler());
         }

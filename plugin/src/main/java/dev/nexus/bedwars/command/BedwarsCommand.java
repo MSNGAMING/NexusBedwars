@@ -106,11 +106,37 @@ public final class BedwarsCommand {
                                 .then(Commands.argument("size", IntegerArgumentType.integer(1, 16))
                                         .executes(ctx -> create(ctx, IntegerArgumentType.getInteger(ctx, "teams"), IntegerArgumentType.getInteger(ctx, "size"))))))));
 
-        root.then(admin("setup").then(arenaArg().executes(ctx -> withArena(ctx, (p, def) -> {
-            if (p == null) return fail(ctx, "player-only", null);
-            plugin.wizard().open(p, def);
-            return Command.SINGLE_SUCCESS;
-        }))));
+        root.then(admin("setup")
+                .executes(ctx -> {
+                    if (ctx.getSource().getSender() instanceof Player p && plugin.wizard().isInSetup(p)) {
+                        String arenaId = plugin.wizard().sessionArena(p);
+                        if (arenaId != null) {
+                            plugin.arenas().definition(arenaId).ifPresent(def -> plugin.wizard().openHub(p, def));
+                            return Command.SINGLE_SUCCESS;
+                        }
+                    }
+                    say(ctx, "<yellow>Usage: <white>/bw setup <arena> <gray>| <white>/bw setup exit <gray>| <white>/bw setup gui <arena>");
+                    return Command.SINGLE_SUCCESS;
+                })
+                .then(Commands.literal("exit").executes(ctx -> {
+                    if (!(ctx.getSource().getSender() instanceof Player p)) return fail(ctx, "player-only", null);
+                    if (!plugin.wizard().isInSetup(p)) {
+                        say(ctx, "<red>You are not in setup mode.");
+                        return 0;
+                    }
+                    plugin.wizard().exit(p);
+                    return Command.SINGLE_SUCCESS;
+                }))
+                .then(Commands.literal("gui").then(arenaArg().executes(ctx -> withArena(ctx, (p, def) -> {
+                    if (p == null) return fail(ctx, "player-only", null);
+                    plugin.wizard().openHub(p, def);
+                    return Command.SINGLE_SUCCESS;
+                }))))
+                .then(arenaArg().executes(ctx -> withArena(ctx, (p, def) -> {
+                    if (p == null) return fail(ctx, "player-only", null);
+                    plugin.wizard().enter(p, def);
+                    return Command.SINGLE_SUCCESS;
+                }))));
         root.then(admin("enable").then(arenaArg().executes(ctx -> withArena(ctx, (p, def) -> {
             ValidationReport report = plugin.arenas().enable(def);
             if (report.valid()) say(ctx, "<green>Arena <white>" + def.id() + "</white> enabled.");
